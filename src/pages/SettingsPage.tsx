@@ -10,7 +10,7 @@ import {
   Eye, EyeOff, Key, FolderSearch, FolderOpen, Search,
   RotateCcw, Trash2, Save, Plug, X, Check, Sun, Moon, Monitor,
   Palette, Database, ImageIcon, Download, HardDrive, Info, RefreshCw, Shield, Clock, CheckCircle, AlertCircle, Mic,
-  Zap, Layers, User, Sparkles, Github, Fingerprint, Lock, ShieldCheck, Minus, Plus, Smile
+  Zap, Layers, User, Sparkles, Github, Fingerprint, Lock, ShieldCheck, Minus, Plus, Smile, Edit
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import './SettingsPage.scss'
@@ -660,6 +660,28 @@ function SettingsPage() {
     setKeyStatus('')
   }
 
+  // 手动输入密钥
+  const handleManualKeyInput = async () => {
+    const key = window.prompt('请输入 64 位十六进制解密密钥：\n\n格式：a1b2c3d4e5f6...（64个字符）\n\n可以通过 SharpWxDump 等工具获取')
+    if (!key) return
+
+    // 验证密钥格式
+    const trimmedKey = key.trim().toLowerCase()
+    if (trimmedKey.length !== 64) {
+      showMessage(`密钥长度错误：当前 ${trimmedKey.length} 位，需要 64 位`, false)
+      return
+    }
+    if (!/^[0-9a-f]{64}$/.test(trimmedKey)) {
+      showMessage('密钥格式错误：只能包含 0-9 和 a-f 的十六进制字符', false)
+      return
+    }
+
+    // 保存密钥
+    setDecryptKey(trimmedKey)
+    await configService.setDecryptKey(trimmedKey)
+    showMessage('密钥已保存！请验证账号目录', true)
+  }
+
   const handleOpenWelcomeWindow = async () => {
     try {
       await window.electronAPI.window.openWelcomeWindow()
@@ -1221,6 +1243,9 @@ function SettingsPage() {
         <div className="btn-row">
           <button className="btn btn-primary" onClick={handleGetKey} disabled={isGettingKey}>
             <Key size={16} /> {isGettingKey ? '获取中...' : '自动获取密钥'}
+          </button>
+          <button className="btn btn-secondary" onClick={handleManualKeyInput} disabled={isGettingKey}>
+            <Edit size={16} /> 手动输入密钥
           </button>
           {isGettingKey && <button className="btn btn-secondary" onClick={handleCancelGetKey}><X size={16} /> 取消</button>}
         </div>

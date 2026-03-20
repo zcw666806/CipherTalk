@@ -1625,6 +1625,24 @@ function registerIpcHandlers() {
     return wxKeyService.detectCurrentAccount(dbPath, maxTimeDiffMinutes)
   })
 
+  // 手动设置密钥（绕过 Hook）
+  ipcMain.handle('wxkey:setManualKey', async (_, key: string) => {
+    try {
+      if (!key || key.length !== 64) {
+        return { success: false, error: '密钥格式错误，应为64位十六进制字符串' }
+      }
+      // 验证密钥是否为有效的十六进制
+      if (!/^[0-9a-fA-F]{64}$/.test(key)) {
+        return { success: false, error: '密钥包含非法字符，应为十六进制字符' }
+      }
+      logService?.info('WxKey', '手动设置密钥成功')
+      return { success: true, key: key.toLowerCase() }
+    } catch (e) {
+      logService?.error('WxKey', '手动设置密钥失败', { error: String(e) })
+      return { success: false, error: String(e) }
+    }
+  })
+
   // 数据库路径相关
   ipcMain.handle('dbpath:autoDetect', async () => {
     return dbPathService.autoDetect()
